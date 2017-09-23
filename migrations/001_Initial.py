@@ -103,8 +103,29 @@ ALTER TABLE ONLY permitted_events ALTER COLUMN id SET DEFAULT nextval('permitted
 ALTER TABLE ONLY permitted_events
     ADD CONSTRAINT permitted_events_pkey PRIMARY KEY (id);
 CREATE INDEX permitted_events_borough ON permitted_events USING btree (borough);
-        """)
 
+
+CREATE TABLE oem_events (
+    record_id character varying(255) NOT NULL,
+    date_time timestamp without time zone NOT NULL,
+    notification_type character varying(255) NOT NULL,
+    notification_title character varying(255) NOT NULL,
+    email_body character varying(1000) NOT NULL,
+);
+ALTER TABLE oem_events OWNER TO postgres;
+CREATE SEQUENCE oem_events_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+ALTER TABLE oem_events_id_seq OWNER TO postgres;
+ALTER SEQUENCE oem_events_id_seq OWNED BY permitted_events.id;
+ALTER TABLE ONLY oem_events ALTER COLUMN id SET DEFAULT nextval('permitted_events_id_seq'::regclass);
+ALTER TABLE ONLY oem_events
+    ADD CONSTRAINT oem_events_pkey PRIMARY KEY (id);
+CREATE INDEX oem_events_borough ON oem_events USING btree (record_id);   
+        """)
 
 
 def rollback(migrator, database, fake=False, **kwargs):

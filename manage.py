@@ -61,5 +61,12 @@ def import_permitted_events_data(path):
     print("Successfully import the Permitted Events data!")
 
 
+@cli.command()
+@click.argument('path', type=click.File('r', encoding='utf-8'))
+def import_oem_events_data(path):
+    models.OEMEvent.import_from_csv(path)
+    print("Successfully import the OEM Events data!")
+
+
 if __name__ == '__main__':
     cli()

@@ -91,6 +91,25 @@ class ServiceRequest(peewee.Model):
         return query.tuples()
 
     @classmethod
+    def count_by_day_and_type(cls, start, end, t):
+        query = (
+            cls
+                .select(
+                peewee.fn.DATE(cls.created).alias('date'),
+                peewee.fn.COUNT(cls.id).alias('calls'),
+            )
+                .where(cls.happened_between(start, end))
+                .where(cls.type << t)
+        )
+        query = (
+            query
+                .group_by(query.c.date)
+                .order_by(query.c.date.asc())
+        )
+
+        return query.tuples()
+
+    @classmethod
     def lat_lngs(cls, query=None):
         query = (
             (query or cls.select())
@@ -195,6 +214,35 @@ class PermittedEvent(peewee.Model):
                 'borough': row['Event Borough'].upper(),
                 'latitude': latitude,
                 'longitude': longitude,
+            })
+
+        cls.insert_many(rows).execute()
+
+class OEMEvent(peewee.Model):
+    record_id = peewee.CharField(null=False, max_length=255)
+    date_time = peewee.DateTimeField(null=False)
+    notification_type = peewee.CharField(null=False, max_length=255)
+    notification_title = peewee.CharField(null=True, max_length=255)
+    email_body = peewee.CharField(null=True, max_length=5000)
+
+    class Meta:
+        db_table = 'oem_events'
+        database = DB
+
+    @classmethod
+    @DB.atomic()
+    def import_from_csv(cls, file_obj):
+        reader = csv.DictReader(file_obj)
+        rows = []
+
+        for row in reader:
+            rows.append({
+                'record_id': row['Record ID'],
+                'date_time': row['Date and Time'],
+                'notification_type': row['NotificationType'],
+                'notification_title': row['Notification Title'],
+                'email_body': row['Email Body']
+
             })
 
         cls.insert_many(rows).execute()
